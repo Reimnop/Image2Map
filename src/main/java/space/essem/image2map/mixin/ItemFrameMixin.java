@@ -15,6 +15,7 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+import space.essem.image2map.Image2Map;
 
 import java.util.EnumSet;
 import java.util.List;
@@ -28,11 +29,11 @@ public abstract class ItemFrameMixin extends AbstractDecorationEntity {
 
 	@Inject(method = "setHeldItemStack(Lnet/minecraft/item/ItemStack;Z)V", at = @At(value = "INVOKE", shift = At.Shift.AFTER, target = "net/minecraft/world/World.updateComparators(Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/block/Block;)V"))
 	private void checkForPosterMap(ItemStack value, boolean update, CallbackInfo ci) {
-		if (value.getItem() != Items.FILLED_MAP || value.getTag() == null
-				|| !value.getTag().contains("i2mStoredMaps", 9)
-				|| !(value.getTag().getList("i2mStoredMaps", 9).get(0) instanceof NbtList))
+		if (value.getItem() != Items.FILLED_MAP || value.getNbt() == null
+				|| !value.getNbt().contains("i2mStoredMaps", 9)
+				|| !(value.getNbt().getList("i2mStoredMaps", 9).get(0) instanceof NbtList))
 			return;
-		NbtList maps = (NbtList) value.getTag().get("i2mStoredMaps");
+		NbtList maps = (NbtList) value.getNbt().get("i2mStoredMaps");
 		if (maps != null) {
 			int hSize = ((NbtList) maps.get(0)).size();
 			int vSize = maps.size();
@@ -56,7 +57,7 @@ public abstract class ItemFrameMixin extends AbstractDecorationEntity {
 			for (int y = 0; y < vSize; y++) {
 				NbtElement mapLine = maps.get(y);
 				if (!(mapLine instanceof NbtList) || ((NbtList) mapLine).size() < hSize
-						|| ((NbtList) mapLine).getType() != 3) {
+						|| mapLine.getType() != 9) { // LIST_TYPE : 9
 					value.setCustomName(new LiteralText("Invalid Item NBT"));
 					return;
 				}
@@ -72,7 +73,7 @@ public abstract class ItemFrameMixin extends AbstractDecorationEntity {
 			for (int y = 0; y < vSize; y++) {
 				for (int x = 0; x < hSize; x++) {
 					ItemStack frameStack = new ItemStack(Items.FILLED_MAP, 1);
-					frameStack.putSubTag("map", ((NbtList) maps.get(y)).get(x));
+					frameStack.setSubNbt("map", ((NbtList) maps.get(y)).get(x));
 					posterFrames[vSize - y - 1][x].setHeldItemStack(frameStack, true);
 				}
 			}

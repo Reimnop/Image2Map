@@ -17,8 +17,6 @@ import net.minecraft.nbt.NbtCompound;
 import net.minecraft.server.world.ServerWorld;
 import space.essem.image2map.Image2Map.DitherMode;
 
-import static space.essem.image2map.Image2Map.DitherMode;
-
 public class MapRenderer {
     private static final double shadeCoeffs[] = { 0.71, 0.86, 1.0, 0.53 };
 
@@ -55,7 +53,12 @@ public class MapRenderer {
         int width = resized.getWidth();
         int height = resized.getHeight();
         int[][] pixels = convertPixelArray(resized);
-        MapColor[] mapColors = MapColor.COLORS;
+        MapColor[] mapColors = new MapColor[64];
+        // get colors because MapColor.COLORS is private
+        // why mojang why
+        for (int i = 0; i < 64; i++) {
+            mapColors[i] = MapColor.get(i);
+        }
         Color imageColor;
         mapColors = Arrays.stream(mapColors).filter(Objects::nonNull).toArray(MapColor[]::new);
 
@@ -70,7 +73,6 @@ public class MapRenderer {
         }
         return stack;
     }
-
     private static Color mapColorToRGBColor(MapColor[] colors, int color) {
         Color mcColor = new Color(colors[color >> 2].color);
         double[] mcColorVec = { (double) mcColor.getRed(), (double) mcColor.getGreen(), (double) mcColor.getBlue() };
@@ -89,11 +91,9 @@ public class MapRenderer {
             this.b = b;
         }
     }
-
     private static int floydDither(MapColor[] mapColors, int[][] pixels, int x, int y, Color imageColor) {
-        // double[] imageVec = { (double) imageColor.getRed() / 255.0, (double)
-        // imageColor.getGreen() / 255.0,
-        // (double) imageColor.getBlue() / 255.0 };
+        // double[] imageVec = { (double) imageColor.getRed() / 255.0, (double) imageColor.getGreen() / 255.0,
+        //         (double) imageColor.getBlue() / 255.0 };
         int colorIndex = nearestColor(mapColors, imageColor);
         Color palletedColor = mapColorToRGBColor(mapColors, colorIndex);
         NegatableColor error = new NegatableColor(imageColor.getRed() - palletedColor.getRed(),
